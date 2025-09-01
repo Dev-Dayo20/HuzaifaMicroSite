@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ring: 255 255 255;
+}
+/* subtle grain */
+body {
+  background-image: radial-gradient(ellipse at top, rgba(56,189,248,0.25) 0%, rgba(15,23,42,0) 50%);
+}
