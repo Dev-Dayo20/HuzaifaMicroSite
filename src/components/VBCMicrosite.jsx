@@ -1,22 +1,57 @@
 import React from 'react'
-import { Phone, Mail, MapPin, Linkedin, Facebook, Twitter, Instagram, Youtube, Download, Copy, Send, MessageSquare, Building2, Briefcase, Globe, ArrowRight, QrCode } from 'lucide-react'
+import { Phone, Mail, MapPin, Linkedin, Facebook, Twitter, Instagram, Youtube, Download, Copy, Send, MessageSquare, Building2, Briefcase, Globe, ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Textarea } from './ui/textarea'
+import photo1 from "../../public/photo1.jpg"
+
+/* ----------------------- helpers: env & normalizers ----------------------- */
+const env = import.meta.env || {}
+
+const val = (key, fallback = '') => {
+  const v = env[key]
+  return (v !== undefined && String(v).trim() !== '') ? String(v).trim() : fallback
+}
+
+const normalizeEmailHref = (raw) => {
+  if (!raw) return ''
+  return raw.startsWith('mailto:') ? raw : `mailto:${raw}`
+}
+const stripMailto = (mailtoHref) => {
+  if (!mailtoHref) return ''
+  return mailtoHref.startsWith('mailto:') ? mailtoHref.slice('mailto:'.length) : mailtoHref
+}
+const normalizeWhatsappHref = (rawNumberOrUrl) => {
+  if (!rawNumberOrUrl) return ''
+  // if it already looks like a URL, return as-is
+  if (/^https?:\/\//i.test(rawNumberOrUrl)) return rawNumberOrUrl
+  // else, build wa.me link from digits
+  const digits = rawNumberOrUrl.replace(/\D/g, '')
+  return digits ? `https://wa.me/${digits}` : ''
+}
+
+/* ----------------------------- env variables ------------------------------ */
+const phone = val('VITE_PHONE_NUMBER')                                  // e.g. +2348039...
+const emailHref = normalizeEmailHref(val('VITE_EMAIL_ADDRESS'))         // accepts "me@x.com" or "mailto:me@x.com"
+const emailPlain = stripMailto(emailHref)                               
+const whatsappHref = normalizeWhatsappHref(val('VITE_WHATSAPP_NUMBER') || val('VITE_WHATSAPP_URL'))
+const mapsHref = val('VITE_MAPS_URL', 'https://maps.google.com/?q=Kirkira%20Innovation%20Hub%2C%20Katsina%2C%20Nigeria')
+const siteUrl = val('VITE_SITE_URL')
+const permalink = val('VITE_MICROSITE_URL', siteUrl || '')
 
 const LINKS = {
-  phone: '+2348039254849',
-  whatsapp: 'https://wa.me/2348039254849?text=Hello%20Huzaifa%2C%20I%27d%20like%20to%20connect.',
-  email: 'mailto:huzaifa@huzex.ng',
-  maps: 'https://maps.google.com/?q=Kirkira%20Innovation%20Hub%2C%20Katsina%2C%20Nigeria',
-  site: 'https://huzex.ng',
-  linkedin: 'https://www.linkedin.com/in/huzaifayakub/',
-  twitter: 'https://x.com/',
-  facebook: 'https://facebook.com/',
-  instagram: 'https://instagram.com/',
-  youtube: 'https://youtube.com/',
-  permalink: 'https://huzex.ng/huzaifa',
+  phone,
+  whatsapp: whatsappHref,
+  email: emailHref,
+  maps: mapsHref,
+  site: siteUrl,
+  linkedin: val('VITE_LINKEDIN_URL'),
+  twitter: val('VITE_TWITTER_URL'),
+  facebook: val('VITE_FACEBOOK_URL'),
+  instagram: val('VITE_INSTAGRAM_URL'),
+  youtube: val('VITE_YOUTUBE_URL'),
+  permalink,
 }
 
 const LOGOS = {
@@ -39,7 +74,7 @@ function Badge({ children }) {
 
 function LinkTile({ href, title, desc, icon: Icon, logo }) {
   return (
-    <a href={href} target='_blank' rel='noreferrer' className='group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10'>
+    <a href={href || '#'} target='_blank' rel='noreferrer' className='group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10'>
       <div className='flex items-center gap-4'>
         {logo ? (
           <img src={logo} alt={title} className='h-12 w-12 rounded-xl object-cover ring-1 ring-white/20' />
@@ -68,15 +103,30 @@ function Section({ title, children }) {
 }
 
 export default function VBCMicrosite() {
-  const vcf = `BEGIN:VCARD\nVERSION:3.0\nN:Musa;Huzaifa Yakubu;;;\nFN:Huzaifa Yakubu Musa\nTITLE:Founder/CEO\nORG:Kirkira Innovation Hub;Huzex Nigeria Ltd;Startup Caravan\nTEL;TYPE=CELL:${LINKS.phone}\nEMAIL:${LINKS.email.replace('mailto:','')}\nURL:${LINKS.site}\nEND:VCARD`
+  // Build a safe vCard even if some fields are missing
+  const vcf = [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    'N:Musa;Huzaifa Yakubu;;;',
+    'FN:Huzaifa Yakubu Musa',
+    'TITLE:Founder/CEO',
+    'ORG:Kirkira Innovation Hub;Huzex Nigeria Ltd;Startup Caravan',
+    phone ? `TEL;TYPE=CELL:${phone}` : null,
+    emailPlain ? `EMAIL:${emailPlain}` : null,
+    siteUrl ? `URL:${siteUrl}` : (permalink ? `URL:${permalink}` : null),
+    'END:VCARD'
+  ].filter(Boolean).join('\n')
+
   const vcfHref = `data:text/vcard;charset=utf-8,${encodeURIComponent(vcf)}`
 
   const copyLink = async () => {
     try {
+      if (!LINKS.permalink) throw new Error('No permalink set')
       await navigator.clipboard.writeText(LINKS.permalink)
       alert('Link copied to clipboard')
+
     } catch (e) {
-      alert('Copy failed – your browser may block clipboard access.')
+      alert('Copy failed – please check that VITE_MICROSITE_URL is set.')
     }
   }
 
@@ -86,7 +136,7 @@ export default function VBCMicrosite() {
       <div className='mx-auto max-w-md px-4 py-8 sm:max-w-lg'>
         <Card>
           <CardHeader className='flex flex-row items-center gap-4'>
-            <img src={LOGOS.avatar} alt='Huzaifa avatar' className='h-16 w-16 rounded-2xl object-cover ring-2 ring-white/20' />
+            <img src={photo1} alt='Huzaifa avatar' className='h-16 w-16 rounded-2xl object-cover ring-2 ring-white/20' />
             <div className='space-y-1'>
               <CardTitle>Huzaifa Yakubu Musa</CardTitle>
               <div className='flex flex-wrap gap-2'>
@@ -98,15 +148,16 @@ export default function VBCMicrosite() {
           </CardHeader>
           <CardContent className='space-y-4'>
             <div className='grid grid-cols-2 gap-3'>
-              <Button asChild><a href={`tel:${LINKS.phone}`}><Phone className='h-4 w-4' />Call</a></Button>
-              <Button asChild><a href={LINKS.whatsapp}><MessageSquare className='h-4 w-4' />WhatsApp</a></Button>
-              <Button asChild><a href={LINKS.email}><Mail className='h-4 w-4' />Email</a></Button>
-              <Button asChild><a href={LINKS.maps}><MapPin className='h-4 w-4' />Locate</a></Button>
+              <Button asChild disabled={!phone}><a href={phone ? `tel:${phone}` : '#'}><Phone className='h-4 w-4' />Call</a></Button>
+              <Button asChild disabled={!LINKS.whatsapp}><a href={LINKS.whatsapp || '#'}><MessageSquare className='h-4 w-4' />WhatsApp</a></Button>
+              <Button asChild disabled={!LINKS.email}><a href={LINKS.email || '#'}><Mail className='h-4 w-4' />Email</a></Button>
+              <Button asChild disabled={!LINKS.maps}><a href={LINKS.maps || '#'}><MapPin className='h-4 w-4' />Locate</a></Button>
             </div>
+
             <div className='flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4'>
               <div className='h-20 w-20 overflow-hidden rounded-xl ring-1 ring-white/20'>
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(LINKS.permalink)}`}
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(LINKS.permalink || '')}`}
                   alt='QR to share'
                   className='h-full w-full object-cover'
                 />
@@ -115,7 +166,7 @@ export default function VBCMicrosite() {
                 <div className='text-sm font-medium'>Share my smart card</div>
                 <div className='text-xs text-white/70'>Scan the QR or copy link to share instantly.</div>
                 <div className='mt-2 flex gap-2 flex-wrap'>
-                  <Button onClick={copyLink}><Copy className='h-4 w-4' />Copy Link</Button>
+                  <Button onClick={copyLink} disabled={!LINKS.permalink}><Copy className='h-4 w-4' />Copy Link</Button>
                   <a href={vcfHref} download='HuzaifaYakubuMusa.vcf' className='inline-flex items-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-white/90'>
                     <Download className='h-4 w-4 mr-2'/>Save Contact
                   </a>
@@ -145,21 +196,21 @@ export default function VBCMicrosite() {
             </div>
           </Section>
 
+
           <Section title='Socials'>
             <div className='grid grid-cols-3 gap-3 sm:grid-cols-5'>
-              <a href={LINKS.linkedin} className='flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-sm hover:bg-white/10'><Linkedin className='h-4 w-4' /><span className='hidden sm:inline'>LinkedIn</span></a>
-              <a href={LINKS.twitter} className='flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-sm hover:bg-white/10'><Twitter className='h-4 w-4' /><span className='hidden sm:inline'>X</span></a>
-              <a href={LINKS.facebook} className='flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-sm hover:bg-white/10'><Facebook className='h-4 w-4' /><span className='hidden sm:inline'>Facebook</span></a>
-              <a href={LINKS.instagram} className='flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-sm hover:bg-white/10'><Instagram className='h-4 w-4' /><span className='hidden sm:inline'>Instagram</span></a>
-              <a href={LINKS.youtube} className='flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-sm hover:bg-white/10'><Youtube className='h-4 w-4' /><span className='hidden sm:inline'>YouTube</span></a>
+              <a href={LINKS.linkedin || '#'} className='flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-sm hover:bg-white/10'><Linkedin className='h-4 w-4' /><span className='hidden sm:inline'>LinkedIn</span></a>
+              <a href={LINKS.twitter || '#'} className='flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-sm hover:bg-white/10'><Twitter className='h-4 w-4' /><span className='hidden sm:inline'>X</span></a>
+              <a href={LINKS.facebook || '#'} className='flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-sm hover:bg-white/10'><Facebook className='h-4 w-4' /><span className='hidden sm:inline'>Facebook</span></a>
+              <a href={LINKS.instagram || '#'} className='flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-sm hover:bg-white/10'><Instagram className='h-4 w-4' /><span className='hidden sm:inline'>Instagram</span></a>
+              <a href={LINKS.youtube || '#'} className='flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-sm hover:bg-white/10'><Youtube className='h-4 w-4' /><span className='hidden sm:inline'>YouTube</span></a>
             </div>
           </Section>
 
           <Section title='Quick Message'>
             <Card>
               <CardContent className='pt-6'>
-                {/* Replace action URL with your Formspree form endpoint */}
-                <form action='https://formspree.io/f/your_form_id' method='POST' className='space-y-3'>
+                <form action={val('VITE_FORMSPREE_ENDPOINT', 'https://formspree.io/f/your_form_id')} method='POST' className='space-y-3'>
                   <Input name='name' placeholder='Your name' required />
                   <Input type='email' name='email' placeholder='Your email' required />
                   <Textarea name='message' placeholder='Short message' rows={4} required />
