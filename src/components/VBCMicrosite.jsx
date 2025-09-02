@@ -146,7 +146,7 @@ export default function VBCMicrosite() {
     if (statusMessage) {
       const timer = setTimeout(() => {
         setStatusMessage("");
-      }, 5000); // Message disappears after 5 seconds
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [statusMessage]);
@@ -325,13 +325,13 @@ export default function VBCMicrosite() {
                 icon={Globe}
                 logo={disbursify}
               />
-              <LinkTile
+              {/* <LinkTile
                 href="#"
                 title="BayānAI"
                 desc="AI Islamic EdTech"
                 icon={Globe}
                 logo={LOGOS.bayani}
-              />
+              /> */}
               <LinkTile
                 href="#"
                 title="HydroIQ"
