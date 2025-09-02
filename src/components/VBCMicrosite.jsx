@@ -30,6 +30,7 @@ import hydroiq from "../../src/assets/hydroiq.png";
 import kirkira from "../../src/assets/kirkira.jpg";
 import startupcaravan from "../../src/assets/startupcaravan.png";
 import huzexlogo from "../../src/assets/huzexlogo.png";
+import treesense from "../../src/assets/treesense.jpg";
 
 /* ----------------------- helpers: env & normalizers ----------------------- */
 const val = (key, fallback = "") => {
@@ -139,28 +140,30 @@ function Section({ title, children }) {
 
 export default function VBCMicrosite() {
   const [isCopied, setIsCopied] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
 
   const onSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    setStatusMessage("Sending...");
 
     try {
       const response = await fetch("https://formspree.io/f/xrblvlrz", {
         method: "POST",
         body: formData,
-        // headers: { Accept: "application/json" },
+        headers: { Accept: "application/json" },
       });
       if (response.ok) {
-        alert("Message sent successfully!");
+        setStatusMessage("Message sent successfully!");
         e.target.reset();
       } else {
-        alert("There was a problem sending your message. Please try again.");
+        setStatusMessage(
+          "There was a problem sending your message. Please try again."
+        );
       }
     } catch (error) {
-      console.error("Network error:", error);
-      alert(
-        "A network error occurred. Please check your connection and try again."
-      );
+      // console.error("Network error:", error);
+      setStatusMessage("A network error occurred. Please try again.");
     }
   };
 
@@ -327,6 +330,13 @@ export default function VBCMicrosite() {
                 icon={Globe}
                 logo={hydroiq}
               />
+              <LinkTile
+                href="#"
+                title="TreeSense"
+                desc=" An integrated SaaS platform: - IoT sensors"
+                icon={Globe}
+                logo={treesense}
+              />
             </div>
           </Section>
 
@@ -374,6 +384,7 @@ export default function VBCMicrosite() {
             <Card>
               <CardContent className="pt-6">
                 <form className="space-y-3" onSubmit={onSubmit}>
+                  {statusMessage && <p>{statusMessage}</p>}
                   <Input
                     type="text"
                     name="name"
