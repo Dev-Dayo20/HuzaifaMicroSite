@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -141,6 +141,15 @@ function Section({ title, children }) {
 export default function VBCMicrosite() {
   const [isCopied, setIsCopied] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
+
+  useEffect(() => {
+    if (statusMessage) {
+      const timer = setTimeout(() => {
+        setStatusMessage("");
+      }, 5000); // Message disappears after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [statusMessage]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
