@@ -1,4 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import {
   Phone,
   Mail,
@@ -29,10 +32,8 @@ import startupcaravan from "../../src/assets/startupcaravan.png";
 import huzexlogo from "../../src/assets/huzexlogo.png";
 
 /* ----------------------- helpers: env & normalizers ----------------------- */
-const env = import.meta.env || {};
-
 const val = (key, fallback = "") => {
-  const v = env[key];
+  const v = import.meta.env[key];
   return v !== undefined && String(v).trim() !== ""
     ? String(v).trim()
     : fallback;
@@ -50,9 +51,7 @@ const stripMailto = (mailtoHref) => {
 };
 const normalizeWhatsappHref = (rawNumberOrUrl) => {
   if (!rawNumberOrUrl) return "";
-  // if it already looks like a URL, return as-is
   if (/^https?:\/\//i.test(rawNumberOrUrl)) return rawNumberOrUrl;
-  // else, build wa.me link from digits
   const digits = rawNumberOrUrl.replace(/\D/g, "");
   return digits ? `https://wa.me/${digits}` : "";
 };
@@ -69,7 +68,7 @@ const mapsHref = val(
   "https://maps.google.com/?q=Kirkira%20Innovation%20Hub%2C%20Katsina%2C%20Nigeria"
 );
 const siteUrl = val("VITE_SITE_URL");
-const permalink = val("VITE_MICROSITE_URL", siteUrl || "");
+const permalink = val("VITE_MICROSITE_URL", siteUrl);
 
 const LINKS = {
   phone,
@@ -86,13 +85,7 @@ const LINKS = {
 };
 
 const LOGOS = {
-  avatar: "https://dummyimage.com/160x160/0b1220/ffffff&text=HY",
-  kirkira: "https://dummyimage.com/80x80/0ea5e9/ffffff&text=K",
-  huzex: "https://dummyimage.com/80x80/22c55e/ffffff&text=H",
-  caravan: "https://dummyimage.com/80x80/f97316/ffffff&text=SC",
-  disbursify: "https://dummyimage.com/80x80/6366f1/ffffff&text=D",
   bayani: "https://dummyimage.com/80x80/06b6d4/ffffff&text=B",
-  hydroiq: "https://dummyimage.com/80x80/84cc16/ffffff&text=HQ",
 };
 
 function Badge({ children }) {
@@ -145,7 +138,32 @@ function Section({ title, children }) {
 }
 
 export default function VBCMicrosite() {
-  // Build a safe vCard even if some fields are missing
+  const [isCopied, setIsCopied] = useState(false);
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+
+    try {
+      const response = await fetch("https://formspree.io/f/xrblvlrz", {
+        method: "POST",
+        body: formData,
+        // headers: { Accept: "application/json" },
+      });
+      if (response.ok) {
+        alert("Message sent successfully!");
+        e.target.reset();
+      } else {
+        alert("There was a problem sending your message. Please try again.");
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+      alert(
+        "A network error occurred. Please check your connection and try again."
+      );
+    }
+  };
+
   const vcf = [
     "BEGIN:VCARD",
     "VERSION:3.0",
@@ -160,14 +178,14 @@ export default function VBCMicrosite() {
   ]
     .filter(Boolean)
     .join("\n");
-
   const vcfHref = `data:text/vcard;charset=utf-8,${encodeURIComponent(vcf)}`;
 
   const copyLink = async () => {
     try {
       if (!LINKS.permalink) throw new Error("No permalink set");
       await navigator.clipboard.writeText(LINKS.permalink);
-      alert("Link copied to clipboard");
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
     } catch (e) {
       alert("Copy failed – please check that VITE_MICROSITE_URL is set.");
     }
@@ -239,7 +257,7 @@ export default function VBCMicrosite() {
                 <div className="mt-2 flex gap-2 flex-wrap">
                   <Button onClick={copyLink} disabled={!LINKS.permalink}>
                     <Copy className="h-4 w-4" />
-                    Copy Link
+                    {isCopied ? "Copied!" : "Copy Link"}
                   </Button>
                   <a
                     href={vcfHref}
@@ -355,33 +373,25 @@ export default function VBCMicrosite() {
           <Section title="Quick Message">
             <Card>
               <CardContent className="pt-6">
-                <form
-                  action={val(
-                    "VITE_FORMSPREE_ENDPOINT",
-                    "https://formspree.io/f/your_form_id"
-                  )}
-                  method="POST"
-                  className="space-y-3"
-                >
-                  <Input name="name" placeholder="Your name" required />
+                <form className="space-y-3" onSubmit={onSubmit}>
+                  <Input
+                    type="text"
+                    name="name"
+                    placeholder="Your name"
+                    required
+                  />
                   <Input
                     type="email"
                     name="email"
                     placeholder="Your email"
                     required
                   />
-                  <Textarea
-                    name="message"
-                    placeholder="Short message"
-                    rows={4}
-                    required
-                  />
+                  <Textarea placeholder="Short message" rows={4} required />
+
                   <div className="flex gap-3 flex-wrap">
-                    <Button asChild>
-                      <button type="submit">
-                        <Send className="h-4 w-4" />
-                        Send
-                      </button>
+                    <Button type="submit">
+                      <Send className="h-4 w-4" />
+                      send
                     </Button>
                     <a
                       href={vcfHref}
