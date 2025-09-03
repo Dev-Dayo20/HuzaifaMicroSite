@@ -255,7 +255,7 @@ export default function VBCMicrosite() {
               <div className="h-20 w-20 overflow-hidden rounded-xl ring-1 ring-white/20">
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                    LINKS.permalink || ""
+                    "https://huzaifa-micro-site.vercel.app/" || ""
                   )}`}
                   alt="QR to share"
                   className="h-full w-full object-cover"
