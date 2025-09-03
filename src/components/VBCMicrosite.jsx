@@ -312,7 +312,7 @@ export default function VBCMicrosite() {
                 logo={huzexlogo}
               />
               <LinkTile
-                href="https://startupcaravan.ng"
+                href="#"
                 title="Startup Caravan"
                 desc="Founder Upskilling · Media"
                 icon={Globe}
