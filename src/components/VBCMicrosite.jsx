@@ -308,20 +308,20 @@ export default function VBCMicrosite() {
                 icon={Briefcase}
                 logo={huzexlogo}
               />
-              <LinkTile
+              {/* <LinkTile
                 href="#"
                 title="Startup Caravan"
                 desc="Founder Upskilling · Media"
                 icon={Globe}
                 logo={startupcaravan}
-              />
-              <LinkTile
+              /> */}
+              {/* <LinkTile
                 href="#"
                 title="Disbursify"
                 desc="Data · Disbursement Tech"
                 icon={Globe}
                 logo={disbursify}
-              />
+              /> */}
               {/* <LinkTile
                 href="#"
                 title="BayānAI"
@@ -329,13 +329,13 @@ export default function VBCMicrosite() {
                 icon={Globe}
                 logo={LOGOS.bayani}
               /> */}
-              <LinkTile
+              {/* <LinkTile
                 href="#"
                 title="HydroIQ"
                 desc="Smart Greenhouse / IoT"
                 icon={Globe}
                 logo={hydroiq}
-              />
+              /> */}
               <LinkTile
                 href="#"
                 title="TreeSense"
